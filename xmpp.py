@@ -389,6 +389,7 @@ class Client(slixmpp.ClientXMPP):
             with open(filename, 'rb') as upfile:
                 print(f"\nReading {filename}...")
                 file = upfile.read()
+
             filesize = len(file)
             fileType = mimetypes.guess_type(filename)[0]
             if fileType is None:
@@ -396,7 +397,7 @@ class Client(slixmpp.ClientXMPP):
             url = await self['xep_0363'].upload_file(
                 str(uuid.uuid4()), 
                 size=filesize,
-                file=file,
+                input_file=file,
                 content_type=fileType,
             )
             # Send Response

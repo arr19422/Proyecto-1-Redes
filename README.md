@@ -41,7 +41,7 @@ This client provides basic features related with chat-application stuff, all thr
 - [x] Participate in group conversations
 - [x] Define presence message
 - [x] Send/receive notifications
-- [x] Send/receive files
+- [] Send/receive files
 
 
 ### Challenges

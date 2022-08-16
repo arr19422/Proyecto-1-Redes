@@ -7,7 +7,7 @@ import uuid
 from slixmpp.exceptions import IqError, IqTimeout
 import xml.etree.ElementTree as ET
 
-class MainClient(slixmpp.ClientXMPP):
+class Client(slixmpp.ClientXMPP):
 
     def __init__(self, jid, password, status, status_message):
         slixmpp.ClientXMPP.__init__(self, jid, password)
@@ -24,17 +24,6 @@ class MainClient(slixmpp.ClientXMPP):
         self.register_plugin('xep_0363') # Files
         self.register_plugin('xep_0065') # SOCKS5 Bytestreams
         self.register_plugin('xep_0085') # Notifications
-
-        # Event handlers
-        self.add_event_handler("session_start", self.start)
-        self.add_event_handler("message", self.message)
-        self.add_event_handler("presence_subscribe", self.new_subscription)
-        self.add_event_handler("got_online", self.got_online)
-        self.add_event_handler("got_offline", self.got_offline)
-        self.add_event_handler("groupchat_message", self.muc_message)
-        self.add_event_handler("disco_info",self.show_info)
-        self.add_event_handler("disco_items", self.show_info)
-        self.add_event_handler("chatstate", self.show_chatstate)
         
         self.local_jid = jid
         self.alias = jid[:jid.index("@")]
@@ -54,7 +43,18 @@ class MainClient(slixmpp.ClientXMPP):
         self.roster.auto_subscribe = True
         self.outter_presences = asyncio.Event()
 
-    async def start(self):
+        # Event handlers
+        self.add_event_handler("session_start", self.start)
+        self.add_event_handler("message", self.message)
+        self.add_event_handler("presence_subscribe", self.new_subscription)
+        self.add_event_handler("got_online", self.got_online)
+        self.add_event_handler("got_offline", self.got_offline)
+        self.add_event_handler("groupchat_message", self.muc_message)
+        self.add_event_handler("disco_info",self.show_info)
+        self.add_event_handler("disco_items", self.show_info)
+        self.add_event_handler("chatstate", self.show_chatstate)
+
+    async def start(self, event):
         # Send presence
         self.send_presence(pshow=self.status, pstatus=self.status_message)
         
@@ -181,6 +181,7 @@ class MainClient(slixmpp.ClientXMPP):
     async def print_my_rooms(self):
         try:
             rooms = await self['xep_0030'].get_items(jid = f"conference.alumchat.fun", iterator=True)
+            return rooms
         except (IqError, IqTimeout):
             print("Error on discovering rooms")
 
@@ -352,6 +353,31 @@ class MainClient(slixmpp.ClientXMPP):
         if autocreate:
             item.subscribe()
 
+    # File sending
+    def file_sender(self, recipient, filename):
+        asyncio.run(self.send_file(recipient, filename))
+
+    async def send_file(self, recipient, filename):
+        try:
+            with open(filename, 'rb') as upfile:
+                print(f"\nReading {filename}...")
+                file = upfile.read()
+            filesize = len(file)
+            fileType = mimetypes.guess_type(filename)[0]
+            if fileType is None:
+                fileType = "application/octet-stream"
+            url = await self['xep_0363'].upload_file(
+                str(uuid.uuid4()), 
+                size=filesize,
+                file=file,
+                content_type=fileType,
+            )
+            # Send Response
+            self.direct_message(f"{recipient}@alumchat.fun", url)
+        except (IqError, IqTimeout):
+            print('File transfer errored')
+        else:
+            print('\nFile transfer finished!!!')
 
 class RegisterClient(slixmpp.ClientXMPP):
 
@@ -369,13 +395,13 @@ class RegisterClient(slixmpp.ClientXMPP):
         self.add_event_handler("session_start", self.start)
         self.add_event_handler("register", self.register)
 
-    async def start(self):
+    async def start(self, event):
         self.send_presence()
         # Auto register & disconnect
         await self.get_roster()
         self.disconnect()
 
-    async def register(self):
+    async def register(self, iq):
         res = self.Iq()
         res['type'] = 'set'
         res['register']['username'] = self.boundjid.user

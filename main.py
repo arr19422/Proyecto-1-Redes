@@ -69,9 +69,9 @@ def start():
             time.sleep(3)
 
             # Timeout connection
-            if xmpp_client.is_client_offline:
+            if xmpp_client.clientOffline:
                 time.sleep(2)
-                if xmpp_client.is_client_offline:
+                if xmpp_client.clientOffline:
                     print("Can't connect to OpenFire server, try again.\n")
                     stop_threads = True
                     xmpp_app_thread.join()
@@ -83,7 +83,7 @@ def start():
                     print("1. Private Messages \n2. Send Private Message \n3. Add contact \n4. Show contacts \n5. Room Chats \n6. Logout")
                     secondary_option = int(input('Choose one: '))
                     # Check option is in range
-                    if secondary_option < 1 or secondary_option > 7:
+                    if secondary_option < 1 or secondary_option > 6:
                         print("Choose a valid option")
                         continue
                 except:
@@ -126,13 +126,13 @@ def start():
                         while True:
                             message = input('-> ')
 
-                            # Excape reserved word
+                            # Options
                             if message == '/exit' or message == '/e' :
                                 xmpp_client.pm_send_state_message(f"{otherUser}@alumchat.fun", "paused")
                                 break
                             elif '-f ' in message:
-                                #file sender
-                                pass
+                                filename = message.split()[1]
+                                xmpp_client.file_sender(otherUser, filename)
                             else:
                                 # Send Response  
                                 xmpp_client.direct_message(f"{otherUser}@alumchat.fun", message)
@@ -172,7 +172,7 @@ def start():
                             room_option = 4
                             break
                     
-                    # Go Back (default option)
+                    # Back
                     if room_option == 4:
                         continue
                     
@@ -198,7 +198,7 @@ def start():
 
                     while True:
                         try:
-                            message = input('--> ')
+                            message = input('-> ')
                             if message == '/exit' or message == '/e':
                                 break
 

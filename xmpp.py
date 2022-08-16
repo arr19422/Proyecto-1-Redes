@@ -328,6 +328,33 @@ class Client(slixmpp.ClientXMPP):
                 # Print general info
                 print(f" - GROUPS: { contacts[alias]['groups'] }")
                 print(f" - SUBS: { contacts[alias]['subscription'] }")
+
+    def show_contact_by_jid(self, jid):
+        self.get_roster()
+        contacts = self.roster[self.local_jid]
+
+        if(len(contacts.keys()) == 0):
+            print("No contacts yet...")
+
+        for contact in contacts.keys():
+            if contact != self.local_jid and contact == jid:
+                # Print contact info
+                print(f"Contact: {contact}")
+                alias = contact
+
+                if alias in self.contacts.keys():
+                    info = self.contacts[alias]['show']
+                    status = self.contacts[alias]['status']
+                    print(f" INFO: { info }")
+                    print(f" STATUS: { status }")
+
+                else:
+                    print(f" INFO: Unavailable")
+                    print(f" STATUS: Unavailable")
+
+                # Print general info
+                print(f" - GROUPS: { contacts[alias]['groups'] }")
+                print(f" - SUBS: { contacts[alias]['subscription'] }")
             
     # Presence and status
     def new_subscription(self, createdPresence):
@@ -432,7 +459,7 @@ class DeleteClient(slixmpp.ClientXMPP):
         # Event handler
         self.add_event_handler("session_start", self.start)
 
-    async def start(self):
+    async def start(self, event):
         self.send_presence()
         await self.get_roster()
         # Delete & disconnect
@@ -440,14 +467,14 @@ class DeleteClient(slixmpp.ClientXMPP):
         self.disconnect()
 
     async def delete(self):
-        response = self.Iq()
-        response['type'] = 'set'
-        response['from'] = self.boundjid.user
-        response['password'] = self.password
-        response['register']['remove'] = 'remove'
+        res = self.Iq()
+        res['type'] = 'set'
+        res['from'] = self.boundjid.user
+        res['password'] = self.password
+        res['register']['remove'] = 'remove'
 
         try:
-            await response.send()
+            await res.send()
             print(f"Account delete successfully: {self.boundjid}!")
         except IqError as e:
             print(f"Couldn't delete account: {e.iq['error']['text']}")

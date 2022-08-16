@@ -79,19 +79,11 @@ def start():
 
             # When Logged
             while True:
-                try:
-                    print("1. Private Messages \n2. Send Private Message \n3. Add contact \n4. Show contacts \n5. Room Chats \n6. Logout")
-                    secondary_option = int(input('Choose one: '))
-                    # Check option is in range
-                    if secondary_option < 1 or secondary_option > 6:
-                        print("Choose a valid option")
-                        continue
-                except:
-                    print("Choose a valid option")
-                    continue
+                print("1. Private Messages \n2. Send Private Message \n3. Add Contact \n4. Show Contacts \n5. Show Contact Info \n6. Room Chats \n7. Logout")
+                secOpt = int(input('Choose one: '))
                 
                 # Show private messages
-                if secondary_option == 1:
+                if secOpt == 1:
                     if len(xmpp_client.messages.keys()) == 0:
                         print("Your don't have new messages.")
                         continue
@@ -117,8 +109,8 @@ def start():
                         xmpp_client.last_chat_with = otherUser
                         xmpp_client.pm_send_state_message(f"{otherUser}@alumchat.fun", "active")
 
-                        print(f"\n--------- Chat with {otherUser} ---------")
-                        print("* Write and press enter to respond (-f for Send a File and /exit or /e to Exit) *")
+                        print(f"\n******* Chat with {otherUser} *******")
+                        print("* Write and press enter to respond (/f for Send a File and /exit or /e to Exit) *")
 
                         for message_history in messages_sent:
                             print(message_history)
@@ -130,7 +122,7 @@ def start():
                             if message == '/exit' or message == '/e' :
                                 xmpp_client.pm_send_state_message(f"{otherUser}@alumchat.fun", "paused")
                                 break
-                            elif '-f ' in message:
+                            elif '/f ' in message:
                                 filename = message.split()[1]
                                 xmpp_client.file_sender(otherUser, filename)
                             else:
@@ -140,26 +132,32 @@ def start():
                         xmpp_client.current_chat_with = None
 
                 # Send private message
-                elif secondary_option == 2:
+                elif secOpt == 2:
                     message_to = input("To: ")
                     message = input("Message: ")
                     xmpp_client.direct_message(message_to, message)
                 
                 # Add contact
-                elif secondary_option == 3:
+                elif secOpt == 3:
                     message_to = input("Name: ")
                     xmpp_client.send_contact_subscription(message_to)
                 
-                # Show contacts info
-                elif secondary_option == 4:
-                    print("\n ----------- CONTACTS ----------- ")
+                # Show contacts
+                elif secOpt == 4:
+                    print("\n ******** CONTACTS ******** ")
                     xmpp_client.show_contacts()
 
+                # Show contact info
+                elif secOpt == 5:
+                    jid = input("JID: ")
+                    print("\n ******** CONTACTS ******** ")
+                    xmpp_client.show_contact_by_jid(jid)
+
                 # Room options
-                elif secondary_option == 5:
+                elif secOpt == 6:
                     while True:
                         try:
-                            print("1. Join room \n2. Create room \n3. Show rooms \n4. Go Back")
+                            print("1. Join Room \n2. Create Room \n3. Show Rooms \n4. Back")
                             room_option = int(input('> '))
 
                             # Check option is in range
@@ -193,7 +191,7 @@ def start():
                     elif room_option == 1:
                         xmpp_client.muc_join(room, username)
 
-                    print(f"\n--------- Group Chat @ {room} ---------")
+                    print(f"\n******** Group Chat: {room} ********")
                     print("* write and press enter to respond (-exit or /e to Exit) *")
 
                     while True:
@@ -210,10 +208,14 @@ def start():
                     xmpp_client.muc_exit_room()
 
                 # Logout
-                elif secondary_option == 6:
+                elif secOpt == 7:
                     stop_threads = True
                     xmpp_app_thread.join()
+                    print("Logout Successfully")
                     break
+                else:
+                    print("Invalid option, Try Again")
+                    continue
 
         # Remove account
         elif opt == 3:
@@ -225,6 +227,7 @@ def start():
 
         # Exit
         elif opt == 4:
+            print("Bye! See You Soon!")
             return
         else:
             print("Invalid option, Try Again")
